@@ -1,20 +1,38 @@
-import { useState, useEffect } from "react";
-import { Logo } from "../components";
+import { useState } from "react";
+import { Logo, FormRow } from "../components";
 import Wrapper from "../assets/wrappers/RegisterPage";
+import { toast } from "react-toastify";
+import { useSelector, useDispatch } from "react-redux";
+import { loginUser, registerUser } from "../features/user/userSlice";
 
 const intitalState = {
   name: "",
   email: "",
-  passWord: "",
+  password: "",
   isMember: true,
 };
 
 const Register = () => {
   const [formData, setformData] = useState(intitalState);
+  const dispatch = useDispatch();
+  const { isLoading, user } = useSelector((store) => store.user);
 
   const handleSubmit = (e) => {
+    const { email, password, isMember, name } = formData;
     e.preventDefault();
-    console.log(e.target.value);
+    if (!email || !password || (!isMember && !name)) {
+      toast.error("Please fill out All Fields", {});
+      return;
+    }
+    if (isMember) {
+      dispatch(loginUser({ email: email, password: password }));
+      return;
+    }
+    dispatch(registerUser({ name, email, password }));
+  };
+
+  const toggle = () => {
+    setformData((prevData) => ({ ...prevData, isMember: !prevData.isMember }));
   };
 
   const onChange = (e) => {
@@ -29,22 +47,39 @@ const Register = () => {
     <Wrapper className="full-page">
       <form className="form" onSubmit={handleSubmit}>
         <Logo />
-        <h3>Login</h3>
-        <div className="form-row">
-          <label htmlFor="name" className="form-label">
-            name
-          </label>
-          <input
+        <h3>{formData?.isMember ? "Login" : "Register"}</h3>
+        {!formData?.isMember && (
+          <FormRow
             type="text"
-            value={formData?.name}
-            onChange={onChange}
             id="name"
-            className="form-input"
+            value={formData?.name}
+            handleChange={onChange}
           />
-        </div>
+        )}
+
+        <FormRow
+          type="email"
+          id="email"
+          value={formData?.email}
+          handleChange={onChange}
+        />
+
+        <FormRow
+          type="password"
+          id="password"
+          value={formData?.password}
+          handleChange={onChange}
+        />
         <button type="submit" className="btn btn-block">
           Submit
         </button>
+        <p>
+          {formData.isMember ? "Not a member yet?" : "Already a member?"}
+
+          <button type="button" onClick={toggle} className="member-btn">
+            {formData.isMember ? "Register" : "Login"}
+          </button>
+        </p>
       </form>
     </Wrapper>
   );
